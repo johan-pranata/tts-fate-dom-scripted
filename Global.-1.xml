@@ -1,0 +1,276 @@
+<Panel id="panelSetupGame" visibility="Host" width="400" height="300" rectAlignment="Center" active="true" allowDragging="true" returnToOriginalPositionWhenReleased="false">
+    <Button id="buttonShowHide" onClick="HideSetupGame" height="50" width="100" color="rgba(0,0,0,1)" text="Hide" textColor="rgba(255,255,255,1)" rectAlignment="UpperRight" offsetXY="0 55"></Button>
+    <Panel id="panelSetupGameContent" padding="10 10 10 10" color="rgba{0,0,0,0.95}">
+        <TableLayout cellSpacing="10" cellBackgroundImage="" cellBackgroundColor="rgba{0,0,0,0}">
+            <Row>
+                <Cell>
+                    <Text height="10" color="White" fontSize="16">Master pool</Text>
+                </Cell>
+                <Cell>
+                    <Panel>
+                        <Dropdown id="ddMasterPool" height="50" onValueChanged="SelectMasterPool">
+                            <Option>Base game only</Option>
+                            <Option>All</Option>
+                        </Dropdown>
+                    </Panel>
+                </Cell>
+            </Row>
+            <Row>
+                <Cell>
+                    <Text preferredWidth="100" color="White" fontSize="16">Servant pool</Text>
+                </Cell>
+                <Cell>
+                    <Panel>
+                        <Dropdown id="ddServantPool" height="50" onValueChanged="SelectServantPool">
+                            <Option>Base game only</Option>
+                            <Option>All</Option>
+                        </Dropdown>
+                    </Panel>
+                </Cell>
+            </Row>
+            <Row>
+                <Cell columnSpan="2">
+                    <Panel>
+                        <Button onClick="SetupGameRun" width="100" height="50">Setup Game</Button>
+                    </Panel>
+                </Cell>
+            </Row>
+            <Row>
+                <Cell columnSpan="2">
+                    <Text color="White">Please have a seat on available colors before starting setup.</Text>                    
+                </Cell>
+            </Row>
+        </TableLayout>
+    </Panel>
+</Panel>
+<!-- Red -->
+<Panel id="panelPhaseRed" width="300" height="200" offsetXY="-20 -300" active="false" visibility="Red" color="rgba{0,0,0,0.95}" rectAlignment="UpperRight" raycastTarget="false">
+    <TableLayout cellBackgroundImage="" cellBackgroundColor="rgba{0,0,0,0}">
+        <Row>
+            <Cell>
+                <Text height="10" color="rgba(1,1,1,0.7)" fontSize="14">Current Phase</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPhaseRed" color="rgba(0,0.75,0.75,0.7)" fontSize="20">Preparation</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <Text height="10" preferredHeight="0" color="rgba(1,1,1,0.7)" fontSize="14">Current Player</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPlayerRed" color="Red" fontSize="20">Red</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonEndTurnRed" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoEndTurn">End Turn</Button>
+                </VerticalLayout>
+            </Cell>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonAliveRed" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoElimination">Alive</Button>
+                </VerticalLayout>
+            </Cell>
+        </Row>
+    </TableLayout>
+</Panel>
+<!-- Orange -->
+<Panel id="panelPhaseOrange" width="300" height="200" offsetXY="-20 -300" active="false" visibility="Orange" color="rgba{0,0,0,0.95}" rectAlignment="UpperRight" raycastTarget="false">
+    <TableLayout cellBackgroundImage="" cellBackgroundColor="rgba{0,0,0,0}">
+        <Row>
+            <Cell>
+                <Text height="10" color="rgba(1,1,1,0.7)" fontSize="14">Current Phase</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPhaseOrange" color="rgba(0,0.75,0.75,0.7)" fontSize="20">Preparation</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <Text height="10" preferredHeight="0" color="rgba(1,1,1,0.7)" fontSize="14">Current Player</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPlayerOrange" color="Orange" fontSize="20">Orange</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonEndTurnOrange" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoEndTurn">End Turn</Button>
+                </VerticalLayout>
+            </Cell>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonAliveOrange" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoElimination">Alive</Button>
+                </VerticalLayout>
+            </Cell>
+        </Row>
+    </TableLayout>
+</Panel>
+<!-- Yellow -->
+<Panel id="panelPhaseYellow" width="300" height="200" offsetXY="-20 -300" active="false" visibility="Yellow" color="rgba{0,0,0,0.95}" rectAlignment="UpperRight" raycastTarget="false">
+    <TableLayout cellBackgroundImage="" cellBackgroundColor="rgba{0,0,0,0}">
+        <Row>
+            <Cell>
+                <Text height="10" color="rgba(1,1,1,0.7)" fontSize="14">Current Phase</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPhaseYellow" color="rgba(0,0.75,0.75,0.7)" fontSize="20">Preparation</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <Text height="10" preferredHeight="0" color="rgba(1,1,1,0.7)" fontSize="14">Current Player</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPlayerYellow" color="Yellow" fontSize="20">Yellow</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonEndTurnYellow" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoEndTurn">End Turn</Button>
+                </VerticalLayout>
+            </Cell>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonAliveYellow" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoElimination">Alive</Button>
+                </VerticalLayout>
+            </Cell>
+        </Row>
+    </TableLayout>
+</Panel>
+<!-- Green -->
+<Panel id="panelPhaseGreen" width="300" height="200" offsetXY="-20 -300" active="false" visibility="Green" color="rgba{0,0,0,0.95}" rectAlignment="UpperRight" raycastTarget="false">
+    <TableLayout cellBackgroundImage="" cellBackgroundColor="rgba{0,0,0,0}">
+        <Row>
+            <Cell>
+                <Text height="10" color="rgba(1,1,1,0.7)" fontSize="14">Current Phase</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPhaseGreen" color="rgba(0,0.75,0.75,0.7)" fontSize="20">Preparation</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <Text height="10" preferredHeight="0" color="rgba(1,1,1,0.7)" fontSize="14">Current Player</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPlayerGreen" color="Green" fontSize="20">Green</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonEndTurnGreen" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoEndTurn">End Turn</Button>
+                </VerticalLayout>
+            </Cell>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonAliveGreen" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoElimination">Alive</Button>
+                </VerticalLayout>
+            </Cell>
+        </Row>
+    </TableLayout>
+</Panel>
+<!-- Blue -->
+<Panel id="panelPhaseBlue" width="300" height="200" offsetXY="-20 -300" active="false" visibility="Blue" color="rgba{0,0,0,0.95}" rectAlignment="UpperRight" raycastTarget="false">
+    <TableLayout cellBackgroundImage="" cellBackgroundColor="rgba{0,0,0,0}">
+        <Row>
+            <Cell>
+                <Text height="10" color="rgba(1,1,1,0.7)" fontSize="14">Current Phase</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPhaseBlue" color="rgba(0,0.75,0.75,0.7)" fontSize="20">Preparation</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <Text height="10" preferredHeight="0" color="rgba(1,1,1,0.7)" fontSize="14">Current Player</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPlayerBlue" color="Blue" fontSize="20">Blue</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonEndTurnBlue" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoEndTurn">End Turn</Button>
+                </VerticalLayout>
+            </Cell>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonAliveBlue" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoElimination">Alive</Button>
+                </VerticalLayout>
+            </Cell>
+        </Row>
+    </TableLayout>
+</Panel>
+<!-- Purple -->
+<Panel id="panelPhasePurple" width="300" height="200" offsetXY="-20 -300" active="false" visibility="Purple" color="rgba{0,0,0,0.95}" rectAlignment="UpperRight" raycastTarget="false">
+    <TableLayout cellBackgroundImage="" cellBackgroundColor="rgba{0,0,0,0}">
+        <Row>
+            <Cell>
+                <Text height="10" color="rgba(1,1,1,0.7)" fontSize="14">Current Phase</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPhasePurple" color="rgba(0,0.75,0.75,0.7)" fontSize="20">Preparation</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <Text height="10" preferredHeight="0" color="rgba(1,1,1,0.7)" fontSize="14">Current Player</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPlayerPurple" color="Purple" fontSize="20">Purple</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonEndTurnPurple" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoEndTurn">End Turn</Button>
+                </VerticalLayout>
+            </Cell>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonAlivePurple" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoElimination">Alive</Button>
+                </VerticalLayout>
+            </Cell>
+        </Row>
+    </TableLayout>
+</Panel>
+<!-- White -->
+<Panel id="panelPhaseWhite" width="300" height="200" offsetXY="-20 -300" active="false" visibility="White" color="rgba{0,0,0,0.95}" rectAlignment="UpperRight" raycastTarget="false">
+    <TableLayout cellBackgroundImage="" cellBackgroundColor="rgba{0,0,0,0}">
+        <Row>
+            <Cell>
+                <Text height="10" color="rgba(1,1,1,0.7)" fontSize="14">Current Phase</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPhaseWhite" color="rgba(0,0.75,0.75,0.7)" fontSize="20">Preparation</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <Text height="10" preferredHeight="0" color="rgba(1,1,1,0.7)" fontSize="14">Current Player</Text>
+            </Cell>
+            <Cell>
+                <Text id="textCurrentPlayerWhite" color="White" fontSize="20">White</Text>
+            </Cell>
+        </Row>
+        <Row>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonEndTurnWhite" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoEndTurn">End Turn</Button>
+                </VerticalLayout>
+            </Cell>
+            <Cell>
+                <VerticalLayout padding="10 10 10 10">
+                    <Button id="buttonAliveWhite" width="100" height="50" fontSize="15" fontStyle="Bold" onClick="DoElimination">Alive</Button>
+                </VerticalLayout>
+            </Cell>
+        </Row>
+    </TableLayout>
+</Panel>
