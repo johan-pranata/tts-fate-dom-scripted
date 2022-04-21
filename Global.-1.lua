@@ -33,8 +33,14 @@ PHASES = {
     {name = "End of Round", color = "#874356"}}
 GAME_START = false
 ACTIVE_PLAYER_COLORS = {}
+
 isSettingUpGame = false
+isEndingTurn = false
+isEliminatingPlayer = false
+
+firstPlayerIndex = nil
 currentPlayerCount = 1
+currentEventGUID = nil
 
 function ShuffleAllDecks()
     for i = 1, 3 do
@@ -210,12 +216,36 @@ function SetupServant(color, index)
     containerServant.destruct()
 end
 
+-- Phases:
+-- 1. Prep
+--     1. Reveal new event, check if there is mana gain, and event effect
+--     2. Reveal new objective in Miyama and Shinto, Shinto is face-down.
+--     3. Players draw from attack deck until hold 3 cards.
+--     4. Any prep skill that can be activated now.
+-- 2. Outpost/Day
+--     1. Put standee on turn order, gain mana on magic workshop
+-- 3. Reveal face-down objective in Shinto.
+-- 4. Action/Night
+--     1. Move (optional).
+--     2. Attack place 2 cards. Skill only can be activated on >7 mana.
+--     3. Any **Action** skill can be activated now.
+--     4. Calculate total power.
+-- 5. Combat/Night
+--     1. In turn order, player may activate **Combat** skill.
+--     2. The winner will get VP from objectives + location VP bonus(2 Miyama and 3 Shinto, only applied if there are >1 players)
+--     3. Split the VP evenly rounded up for even matches.
+--     4. If player is on Recon, they simply collect 2 VP.
+-- 6. Retrieve master, discard all face-up objective cards.
+-- 7. Start new round until round 11, don't forget the elimination
+
 function DoNextPhase()
     if not currentPhaseIndex then
         currentPhaseIndex = 1
     else
         currentPhaseIndex = (currentPhaseIndex % #PHASES) + 1
     end
+
+    UpdatePhasePanel(PHASES[currentPhaseIndex])
 
     if PHASES[currentPhaseIndex].name == "Preparation" then
         if not currentRound then
@@ -230,109 +260,91 @@ function DoNextPhase()
             end,
             0.5
         )
-
-        UpdatePhasePanel(PHASES[currentPhaseIndex])
         Wait.time(
             function()
                 broadcastToAll(PHASES[currentPhaseIndex].name .. " Phase", "Pink")
             end, 1)
 
-
+        -- Set first player color
         if currentRound == 1 then
             local rndNum = math.random(1, #ACTIVE_PLAYER_COLORS)
             currentPlayerIndex = rndNum
-            firstPlayerColor = ACTIVE_PLAYER_COLORS[rndNum]
+            firstPlayerIndex = rndNum
 
             local color = ACTIVE_PLAYER_COLORS[currentPlayerIndex]
             Wait.time(
                 function()
                     broadcastToAll(PHASES[currentPhaseIndex].name.." - Player "..color.." Turn!", color)
                 end, 2)
-        else
-            for i, color in ipairs(PLAYER_COLORS) do
-                if color == firstPlayerColor then
-                    firstPlayerIndex = i
-                end
-            end
-
-            for i = 1, #PLAYER_COLORS - 1 do
-                firstPlayerIndex = (firstPlayerIndex % #PLAYER_COLORS) + 1
-                if HasValue(ACTIVE_PLAYER_COLORS, PLAYER_COLORS[firstPlayerIndex]) then
-                    firstPlayerColor = PLAYER_COLORS[firstPlayerIndex]
-                    break
-                end
-            end
-
-            for i, color in ipairs(ACTIVE_PLAYER_COLORS) do
-                if firstPlayerColor == color then
-                    firstPlayerIndex = i
-                end
-            end
-
-            currentPlayerIndex = firstPlayerIndex
         end
 
         UpdateCurrentPlayerText()
 
+        -- Check deck event
         local zoneEvent = getObjectFromGUID(zoneEventGUID)
-        local event = nil
+        local eventDeck = nil
+        --- Check for face-down events
         for _, object in ipairs(zoneEvent.getObjects()) do
-            if not event and object.getRotation()[3] > 90 then
-                event = object
+            if not eventDeck and object.getRotation()[3] > 90 then
+                eventDeck = object
             end
         end
-
-        if not event then
+        --- Check for face-up events (Climax)
+        if not eventDeck then
             for _, object in ipairs(zoneEvent.getObjects()) do
-                if not event and HasValue({"Deck", "Card"}, object.type) then
-                    event = object
+                if not eventDeck and HasValue({"Deck", "Card"}, object.type) then
+                    eventDeck = object
                 end
             end
         end
-
-        if event then
+        --- Put event to current event
+        if eventDeck then
             local zoneActiveEvent = getObjectFromGUID(zoneActiveEventGUID)
-            if event.type == "Deck" then
-                event.takeObject({
+            if eventDeck.type == "Deck" then
+                currentEventGUID = eventDeck.takeObject({
                     position = zoneActiveEvent.getPosition(),
                     rotation = {0,180,0},
                     isSmooth = false
-                })
-            elseif event.type == "Card" then
-                event.setPosition(zoneActiveEvent.getPosition())
-                event.setRotation({0,180,0})
+                }).guid
+            elseif eventDeck.type == "Card" then
+                eventDeck.setPosition(zoneActiveEvent.getPosition())
+                eventDeck.setRotation({0,180,0})
+                currentEventGUID = eventDeck.guid
             end
         end
 
-        -- Wait.time(
-        --     function()
-        --         broadcastToAll("1. Reveal new event and apply its effect!", "Pink")
-        --     end,
-        --     2
-        -- )
-        -- Wait.time(
-        --     function()
-        --         broadcastToAll("2. Reveal new objective in Miyama and Shinto!", "Pink")
-        --     end,
-        --     3
-        -- )
-        -- Wait.time(
-        --     function()
-        --         broadcastToAll("3. Draw action card until each player has 3 cards!", "Pink")
-        --     end,
-        --     4
-        -- )
-        -- Wait.time(
-        --     function()
-        --         broadcastToAll("Players may activate Prep skill in turn order.", "Pink")
-        --     end,
-        --     5
-        -- )
+        -- Show preparation actions
+        Wait.time(
+            function()
+                broadcastToAll("Reveal new event, gain mana from it, and apply its effect!", "Pink")
+            end,
+            2
+        )
+        Wait.time(
+            function()
+                broadcastToAll("Reveal new objective in Miyama and Shinto!", "Pink")
+            end,
+            3.5
+        )
+        Wait.time(
+            function()
+                broadcastToAll("Draw action card until each player has 3 cards!", "Pink")
+            end,
+            5
+        )
+        Wait.time(
+            function()
+                broadcastToAll("Players may activate Prep skill in turn order", "Pink")
+            end,
+            6.5
+        )
     else
-        UpdatePhasePanel(PHASES[currentPhaseIndex])
         broadcastToAll(PHASES[currentPhaseIndex].name .. " Phase", "Pink")
         if PHASES[currentPhaseIndex].name == "Outpost" then
-
+            Wait.time(
+                function()
+                    broadcastToAll("Put standee to location in turn order!", "Pink")
+                end, 1)
         elseif PHASES[currentPhaseIndex].name == "Action" then
             Wait.time(
                 function()
@@ -341,7 +353,7 @@ function DoNextPhase()
             Wait.time(
                 function()
                     broadcastToAll("Resolve Action effect in turn order!", "Pink")
-                end, 2)
+                end, 3)
         elseif PHASES[currentPhaseIndex].name == "Combat" then
             Wait.time(
                 function()
@@ -365,47 +377,43 @@ function DoNextPhase()
                     elseif currentRound == 11 then
                         broadcastToAll("Pick the Holy Grail War Winner by the highest VP!", "Pink")
                     end
-                end, 2)
+                end, 3)
         end
     end
 end
 
--- Phases:
--- 1. Prep
---     1. Reveal new event, check if there is mana gain, and event effect
---     2. Reveal new objective in Miyama and Shinto, Shinto is face-down.
---     3. Players draw from attack deck until hold 3 cards.
---     4. Any prep skill that can be activated now.
--- 2. Outpost/Day
---     1. Put standee on turn order, gain mana on magic workshop
--- 3. Reveal face-down objective in Shinto.
--- 4. Action/Night
---     1. Move (optional).
---     2. Attack place 2 cards. Skill only can be activated on >7 mana.
---     3. Any **Action** skill can be activated now.
---     4. Calculate total power.
--- 5. Combat/Night
---     1. In turn order, player may activate **Combat** skill.
---     2. The winner will get VP from objectives + location VP bonus(2 Miyama and 3 Shinto, only applied if there are >1 players)
---     3. Split the VP evenly rounded up for even matches.
---     4. If player is on Recon, they simply collect 2 VP.
--- 6. Retrieve master, discard all face-up objective cards.
--- 7. Start new round until round 11, don't forget the elimination
-
 function DoEndTurn(player, value, id)
-    if player.color ~= ACTIVE_PLAYER_COLORS[currentPlayerIndex] then
-        return
+    if value ~= "Eliminate" then
+        if player.color ~= ACTIVE_PLAYER_COLORS[currentPlayerIndex] then
+            return
+        elseif isEndingTurn or isEliminatingPlayer then
+            return
+        end
     end
 
-    if currentPlayerCount < #ACTIVE_PLAYER_COLORS then
-        currentPlayerIndex = (currentPlayerIndex % #ACTIVE_PLAYER_COLORS) + 1
-        currentPlayerCount = (currentPlayerCount or 0) + 1
+    isEndingTurn = true
+
+    if currentPlayerCount < GetAlivePlayersCount() then
+        currentPlayerIndex = NextPlayer(currentPlayerIndex)
+        if value ~= "Eliminate" then
+            currentPlayerCount = (currentPlayerCount or 0) + 1
+        end
     else
-        currentPlayerCount = 1
-        DoNextPhase()
+        if PHASES[currentPhaseIndex].name == "End of Round" then
+            firstPlayerIndex = NextPlayer(firstPlayerIndex)
+            currentPlayerIndex = firstPlayerIndex
+        else
+            currentPlayerIndex = NextPlayer(currentPlayerIndex)
+        end
+        if value ~= "Eliminate" then
+            currentPlayerCount = 1
+            DoNextPhase()
+        end
     end
 
     UpdateCurrentPlayerText()
+
+    isEndingTurn = false
 
     local color = ACTIVE_PLAYER_COLORS[currentPlayerIndex]
     Wait.time(
@@ -415,33 +423,53 @@ function DoEndTurn(player, value, id)
 end
 
 function DoElimination(player, value, id)
-    if not HasValue(ACTIVE_PLAYER_COLORS, player.color) then
+    if not PLAYER_DATA[player.color].isAlive then
+        return
+    elseif isEndingTurn or isEliminatingPlayer then
         return
     end
 
-    id = "buttonAlive"..player.color
-    UI.setAttribute(id, "text", "Eliminated")
-    UI.setAttribute(id, "colors", "Grey|Grey|Grey|Grey")
-    UI.setAttribute(id, "interactable", "false")
+    isEliminatingPlayer = true
 
-    id = "buttonEndTurn"..player.color
-    UI.setAttribute(id, "colors", "Grey|Grey|Grey|Grey")
-    UI.setAttribute(id, "interactable", "false")
+    UI.setAttribute("buttonAlive"..player.color, "text", "Eliminated")
+    UI.setAttribute("buttonAlive"..player.color, "colors", "Grey|Grey|Grey|Grey")
+    UI.setAttribute("buttonAlive"..player.color, "interactable", "false")
+
+    UI.setAttribute("buttonEndTurn"..player.color, "colors", "Grey|Grey|Grey|Grey")
+    UI.setAttribute("buttonEndTurn"..player.color, "interactable", "false")
+
+    PLAYER_DATA[player.color].isAlive = false
 
     for i, color in ipairs(ACTIVE_PLAYER_COLORS) do
         if color == player.color then
-            table.remove(ACTIVE_PLAYER_COLORS, i)
             if i == currentPlayerIndex then
-                currentPlayerIndex = i-1
-                if currentPlayerIndex == 0 then
-                    currentPlayerIndex = #ACTIVE_PLAYER_COLORS
-                end
+                DoEndTurn(player, "Eliminate", nil)
             end
             break
         end
     end
 
-    DoEndTurn(player, value, id)
+    isEliminatingPlayer = false
+end
+
+function NextPlayer(currentIndex)
+    for loopIndex=1,#ACTIVE_PLAYER_COLORS+1 do
+        currentIndex = (currentIndex % #ACTIVE_PLAYER_COLORS) + 1
+        if PLAYER_DATA[ACTIVE_PLAYER_COLORS[currentIndex]].isAlive then
+            return currentIndex
+        end
+    end
+    return nil
+end
+
+function GetAlivePlayersCount()
+    local count = 0
+    for i=1, #ACTIVE_PLAYER_COLORS do
+        if PLAYER_DATA[ACTIVE_PLAYER_COLORS[i]].isAlive then
+            count = count + 1
+        end
+    end
+    return count
 end
 
 -- UI FUNCTIONS
@@ -480,6 +508,14 @@ function UpdateCurrentPlayerText()
     for _, color in ipairs(PLAYER_COLORS) do
         UI.setAttribute("textCurrentPlayer"..color, "color", ACTIVE_PLAYER_COLORS[currentPlayerIndex])
         UI.setValue("textCurrentPlayer"..color, ACTIVE_PLAYER_COLORS[currentPlayerIndex])
+
+        -- if ACTIVE_PLAYER_COLORS[currentPlayerIndex] ~= color then
+        --     UI.setAttribute("buttonEndTurn"..color, "colors", "Grey|Grey|Grey|Grey")
+        --     UI.setAttribute("buttonEndTurn"..color, "interactable", "false")
+        -- else
+        --     UI.setAttribute("buttonEndTurn"..color, "colors", "White|White|White|White")
+        --     UI.setAttribute("buttonEndTurn"..color, "interactable", "true")
+        -- end
     end
 end
 
@@ -500,6 +536,7 @@ PLAYER_COLORS = {}
 AVAILABLE_COLORS = {"Red", "Orange", "Yellow", "Green", "Blue", "Purple", "White"}
 PLAYER_DATA = {
     Red = {
+        isAlive = true,
         rotation = Vector(0,180,0),
         zoneRightGUID = "069282",
         zoneMasterGUID = "16f259",
@@ -512,6 +549,7 @@ PLAYER_DATA = {
         zoneServantDiscardAttackDeckGUID = "bf0803"
     },
     Orange = {
+        isAlive = true,
         rotation = Vector(0,180,0),
         zoneRightGUID = "bf0925",
         zoneMasterGUID = "e36f41",
@@ -524,6 +562,7 @@ PLAYER_DATA = {
         zoneServantDiscardAttackDeckGUID = "c8ed91"
     },
     Yellow = {
+        isAlive = true,
         rotation = Vector(0,180,0),
         zoneRightGUID = "1c7c5a",
         zoneMasterGUID = "71cca0",
@@ -536,6 +575,7 @@ PLAYER_DATA = {
         zoneServantDiscardAttackDeckGUID = "a59edf"
     },
     Green = {
+        isAlive = true,
         rotation = Vector(0,270,0),
         zoneRightGUID = "775a0a",
         zoneMasterGUID = "b36edb",
@@ -548,6 +588,7 @@ PLAYER_DATA = {
         zoneServantDiscardAttackDeckGUID = "57d470"
     },
     Blue = {
+        isAlive = true,
         rotation = Vector(0,0,0),
         zoneRightGUID = "402c21",
         zoneMasterGUID = "0b4d22",
@@ -560,6 +601,7 @@ PLAYER_DATA = {
         zoneServantDiscardAttackDeckGUID = "277204"
     },
     Purple = {
+        isAlive = true,
         rotation = Vector(0,0,0),
         zoneRightGUID = "d6bf66",
         zoneMasterGUID = "71350c",
@@ -572,6 +614,7 @@ PLAYER_DATA = {
         zoneServantDiscardAttackDeckGUID = "2d3636"
     },
     White = {
+        isAlive = true,
         rotation = Vector(0,0,0),
         zoneRightGUID = "41dfe0",
         zoneMasterGUID = "f8d55c",
