@@ -37,10 +37,9 @@
             </Row>
             <Row>
                 <Cell columnSpan="2">
-                    <HorizontalLayout spacing="0" padding="10 10 0 0" childAlignment="BottomCenter">
-                        <Text color="Red" fontSize="40" fontStyle="Bold">!</Text>
-                        <Text color="White">Please have a seat on available colors
-                            before starting setup.</Text>   
+                    <HorizontalLayout spacing="0" padding="10 10 0 0" childAlignment="BottomCenter" childForceExpandWidth="false">
+                        <Text color="Red" fontSize="40" fontStyle="Bold" preferredWidth="35">!</Text>
+                        <Text color="White">Please have a seat on available colors before starting setup.</Text>   
                     </HorizontalLayout>               
                 </Cell>
             </Row>

@@ -15,7 +15,7 @@ ALL_SERVANTS_GUID = "b214c1"
 deckEventGUID = "23cc85"
 deckObjectiveGUID = "71cee8"
 zoneEventGUID = "eec076"
-zoneObjectiveGUID = "8d95fb"
+zoneObjectiveGUID = "4d5578"
 zoneBurnedEventGUID = "964b4d"
 zoneDiscardedObjectiveGUID = "bd72b8"
 zoneRemovedObjectiveGUID = "ed3f66"
@@ -685,6 +685,73 @@ EVENTS = {
 	["Heaven's Feel"] = {
 		mana = 6,
 		description = "Climax: 2+ Players left.\nBan acces to [Shinto], Recon and all but one space in the [Workshop].\nAdd 2 face-up objectives to [Miyama]."
+	}
+}
+
+OBJECTIVES = {
+	["Honorable Duel"] = {
+		vp = 2,
+		description = "Strength type attacks gain +2 power on this battlefield."
+	},
+	["Sacrificial Grounds"] = {
+		vp = 2,
+		description = "Magic type attacks gain +2 power on this battlefield."
+	},
+	["Suppressive Fire"] = {
+		vp = 2,
+		description = "Agility type attacks gain +3 power on this battlefield."
+	},
+	["Synergize"] = {
+		vp = 2,
+		description = "Players on this battlefield gain +4 total power, if all their attacks have at least 1 matching type."
+	},
+	["Ambush"] = {
+		vp = 2,
+		description = "Players gain +5 total power on this battlefield, if their Servant's name is hidden."
+	},
+	["Test of Strength"] = {
+		vp = 3,
+		description = "Strength type attacks gain +3 power on this battlefield."
+	},
+	["Sacred Grounds"] = {
+		vp = 2,
+		description = "Magic type attacks gain +3 power on this battlefield."
+	},
+	["Desperation Move"] = {
+		vp = 4,
+		description = "Last place in VP gains +12 Power here, 2nd to last place gains +8 Power and 3rd to last place gains +4 Power."
+	},
+	["Bring Illya Back"] = {
+		vp = 5,
+		description = ""
+	},
+	["Break Bounded Field"] = {
+		vp = 2,
+		description = "Special type attacks cannot be played on this battlefield.\nPlayers cannot move to or from this location."
+	},
+	["Scavenge Ground Zero"] = {
+		vp = 3,
+		description = "This battlefield does not provide any terrain advantage."
+	},
+	["Open Ley Line"] = {
+		vp = 2,
+		description = "At the end of combat players on this battlefield gain 2 Mana."
+	},
+	["Take High Ground"] = {
+		vp = 3,
+		description = "Players on this battlefield double thier terrain advantage."
+	},
+	["Contain Neutral Threat"] = {
+		vp = 2,
+		description = "Attacks with base power 4 or higher gain +1 power.\nThe winner of this fight may restore 1 Comamnd Seal."
+	},
+	["Fated Confrontation"] = {
+		vp = 3,
+		description = "Attacks on this battlefield with a base power of 1 and 2 have their base power increased to 5."
+	},
+	["Difficult Terrain"] = {
+		vp = 2,
+		description = "Agility type attacks gain +2 power on this battlefield."
 	}
 }
 
