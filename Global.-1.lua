@@ -1,3 +1,4 @@
+---@diagnostic disable: lowercase-global
 --[[ The onLoad event is called after the game save finishes loading. --]]
 function onLoad()
     Pool = {
@@ -11,7 +12,7 @@ BASE_GAME_MASTERS_GUID = "575684"
 ALL_MASTERS_GUID = "2cd95b"
 BASE_GAME_SERVANTS_GUID = "d8f1d7"
 ALL_SERVANTS_GUID = "b214c1"
-deckEventGUID = "99c433"
+deckEventGUID = "23cc85"
 deckObjectiveGUID = "71cee8"
 zoneEventGUID = "eec076"
 zoneObjectiveGUID = "8d95fb"
@@ -26,11 +27,11 @@ containerServantsGUID = BASE_GAME_SERVANTS_GUID
 zoneVPGUIDs = {"444e23", "f7d8c9", "342d38", "d95d7e", "cc7aa2", "95ef52", "c4aed1", "0fb17d", "696526", "e7b731", "c6a17d", "96399a", "d1781f", "102d0a", "52c935", "182fbb", "7a6864", "ea1e39", "417109", "727353", "ddce8c", "2c3b04", "649235", "b08a0a", "c0a1bd", "a856d7", "f1cb25", "adae75", "a6f32a", "7c80f1", "54ccfb", "b1f99b", "3f758b", "344387", "3b1b46", "c580b3", "d8c7a9", "e76013", "452e88"}
 
 PHASES = {
-    {name = "Preparation", color = "#FFFFFF"},
-    {name = "Outpost", color = "#F6E7D8"},
-    {name = "Action", color = "#F68989"},
-    {name = "Combat", color = "#C65D7B"},
-    {name = "End of Round", color = "#874356"}}
+    {name = "Preparation", color = "#F2F230"},
+    {name = "Outpost", color = "#C2F261"},
+    {name = "Action", color = "#91F291"},
+    {name = "Combat", color = "#61F2C2"},
+    {name = "End of Round", color = "#30F2F2"}}
 GAME_START = false
 ACTIVE_PLAYER_COLORS = {}
 
@@ -157,18 +158,18 @@ function SetupMaster(color, index)
     local zoneVP0 = getObjectFromGUID(zoneVPGUIDs[1])
     local zoneMaster = getObjectFromGUID(PLAYER_DATA[color].zoneMasterGUID)
     local zoneMasterCommandSeals = {}
-    for i, guid in ipairs(PLAYER_DATA[color].zoneMasterCommandSealGUIDs) do
+    for _, guid in ipairs(PLAYER_DATA[color].zoneMasterCommandSealGUIDs) do
         table.insert(zoneMasterCommandSeals, getObjectFromGUID(guid))
     end
     local zoneMasterSkills = {}
-    for i, guid in ipairs(PLAYER_DATA[color].zoneMasterSkillGUIDs) do
+    for _, guid in ipairs(PLAYER_DATA[color].zoneMasterSkillGUIDs) do
         table.insert(zoneMasterSkills, getObjectFromGUID(guid))
     end
 
     WaitObjectUntilReady(containerMaster)
 
     -- Standee
-    containerMaster.takeObject({position=zoneMaster.getPosition() + PLAYER_DATA[color].vectorStandee, rotation=PLAYER_DATA[color].rotation, smooth=false})
+    PLAYER_DATA[color].Standee = containerMaster.takeObject({position=zoneMaster.getPosition() + PLAYER_DATA[color].vectorStandee, rotation=PLAYER_DATA[color].rotation, smooth=false})
     -- VP Tracker
     PLAYER_DATA[color].VPTracker = containerMaster.takeObject({position=zoneVP0.getPosition() + Vector(0,index*1.5,0), rotation=PLAYER_DATA[color].rotation, smooth=false})
     -- Master Profile
@@ -253,6 +254,15 @@ function DoNextPhase()
         else
             currentRound = currentRound + 1
         end
+
+		-- Returning all standees to their owners
+		for _, color in ipairs(ACTIVE_PLAYER_COLORS) do
+			if PLAYER_DATA[color].Standee ~= nil then
+				local playerData = PLAYER_DATA[color]
+				local zoneMaster = getObjectFromGUID(playerData.zoneMasterGUID)
+				playerData.Standee.setPosition(zoneMaster.getPosition() + playerData.vectorStandee)
+			end
+		end
 
         Wait.time(
             function()
@@ -508,14 +518,6 @@ function UpdateCurrentPlayerText()
     for _, color in ipairs(PLAYER_COLORS) do
         UI.setAttribute("textCurrentPlayer"..color, "color", ACTIVE_PLAYER_COLORS[currentPlayerIndex])
         UI.setValue("textCurrentPlayer"..color, ACTIVE_PLAYER_COLORS[currentPlayerIndex])
-
-        -- if ACTIVE_PLAYER_COLORS[currentPlayerIndex] ~= color then
-        --     UI.setAttribute("buttonEndTurn"..color, "colors", "Grey|Grey|Grey|Grey")
-        --     UI.setAttribute("buttonEndTurn"..color, "interactable", "false")
-        -- else
-        --     UI.setAttribute("buttonEndTurn"..color, "colors", "White|White|White|White")
-        --     UI.setAttribute("buttonEndTurn"..color, "interactable", "true")
-        -- end
     end
 end
 
@@ -628,6 +630,64 @@ PLAYER_DATA = {
     }
 }
 
+EVENTS = {
+	-- Normal Events
+	["Turning Point"] = {
+		mana = 2,
+		description = "Add a face-up objective to [Miyama] and [Shinto]."
+	},
+	["Battle in Shinto"] = {
+		mana = 2,
+		description = "Add a face-up objective to [Shinto]."
+	},
+	["Killers in Miyama"] = {
+		mana = 2,
+		description = "Add a face-up objective to [Miyama]."
+	},
+	["Visions of a Distant Life"] = {
+		mana = 0,
+		description = "Players in [Miyama] and [Shinto] gain +3 total power, if all their attacks have at least 1 matching type."
+	},
+	["Angra Mainyu's Essence"] = {
+		mana = 0,
+		description = "Magic type attacks gain +1 power in [Miyama] and [Shinto].\nNoble Phantasms cannot be used."
+	},
+	["Angra Mainyu's Shade"] = {
+		mana = 0,
+		description = "Agility type attacks gain +1 power in [Miyama] and [Shinto].\nNoble Phantasms cannot be used."
+	},
+	["Angra Mainyu's Curse"] = {
+		mana = 0,
+		description = "Strength type attacks gain +1 power in [Miyama] and [Shinto].\nNoble Phantasms cannot be used."
+	},
+	["Overwhelming Rage"] = {
+		mana = 2,
+		description = "Strength type attacks gain +2 power in [Miyama] and [Shinto]."
+	},
+	["Calm before the Storm"] = {
+		mana = 2,
+		description = "Agility type attacks gain +2 power in [Miyama] and [Shinto]."
+	},
+	["Perfect Flow"] = {
+		mana = 2,
+		description = "Magic type attacks gain +2 power in [Miyama] and [Shinto]."
+	},
+
+	-- Climax Events
+	["The Night Fate Stood Still"] = {
+		mana = 4,
+		description = "Climax: 4+ Players left.\nAdd a face-up objectives to [Miyama] and [Shinto]."
+	},
+	["At the Gates of Hell"] = {
+		mana = 4,
+		description = "Climax: 3+ Players left.\nBan acces to [Shinto], Recon and all but one space in the [Workshop].\nAdd 1 face-up objectives to [Miyama]."
+	},
+	["Heaven's Feel"] = {
+		mana = 6,
+		description = "Climax: 2+ Players left.\nBan acces to [Shinto], Recon and all but one space in the [Workshop].\nAdd 2 face-up objectives to [Miyama]."
+	}
+}
+
 -- BASIC FUNCTIONS
 function WaitFrames(frames)
     while frames > 0 do
@@ -664,8 +724,8 @@ end
 ---@param zone any
 ---@param types table
 function GetObjectFromZone(zone, types)
-    for i, object in ipairs(zone.getObjects()) do
-        if hasValue(types, object.type) then
+    for _, object in ipairs(zone.getObjects()) do
+        if HasValue(types, object.type) then
             return object
         end
     end
