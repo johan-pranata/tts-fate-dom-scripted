@@ -50,45 +50,43 @@
     <VerticalScrollView>
         <Panel color="rgba{0,0,0,1}">
             <VerticalLayout childAlignment="UpperCenter" childForceExpandHeight="false">
-                <Text id="textEventName" color="#87ceeb" fontSize="16" preferredHeight="40">Event - Event name</Text>
-                <Text id="textEventDesc" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter" minHeight="30">Event description goes here</Text>
+                <VerticalLayout padding="5 5 10 10" childForceExpandHeight="false" spacing="10">
+                    <Text id="textEventName" color="#87ceeb" fontSize="16">Event - Event name</Text>
+                    <Text id="textEventDesc" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter">Event description goes here</Text>
+                </VerticalLayout>
 
-                <VerticalLayout id="vlMiyamaObjs" active="true" childForceExpandHeight="false">
-                    <Text color="#ffa500" fontSize="16" preferredHeight="40">Miyama</Text>
+                <VerticalLayout id="vlMiyamaObjs" active="true" padding="5 5 25 10" childForceExpandHeight="false" spacing="10">
+                    <Text color="#ffa500" fontSize="16">Miyama - 2VP</Text>
 
-                    <VerticalLayout active="true" childForceExpandHeight="false">
+                    <VerticalLayout id="vlMiyamaObj1" active="true" childForceExpandHeight="false">
                         <Text id="textMiyamaObjName1" color="rgba(1,1,1,1)" fontSize="16" preferredHeight="30">Obj name 1</Text>
-                        <Text id="textMiyamaObjDesc1" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter" minHeight="30">Obj description goes here</Text>
+                        <Text id="textMiyamaObjDesc1" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter">Obj description goes here</Text>
                     </VerticalLayout>
 
-                    <VerticalLayout active="false" childForceExpandHeight="false">
+                    <VerticalLayout id="vlMiyamaObj2" active="true" childForceExpandHeight="false">
                         <Text id="textMiyamaObjName2" color="rgba(1,1,1,1)" fontSize="16" preferredHeight="30">Obj name 2</Text>
-                        <Text id="textMiyamaObjDesc2" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter" minHeight="30">Obj description goes here</Text>
+                        <Text id="textMiyamaObjDesc2" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter">Obj description goes here</Text>
                     </VerticalLayout>
 
-                    <VerticalLayout active="false" childForceExpandHeight="false">
+                    <VerticalLayout id="vlMiyamaObj3" active="true" childForceExpandHeight="false">
                         <Text id="textMiyamaObjName3" color="rgba(1,1,1,1)" fontSize="16" preferredHeight="30">Obj name 3</Text>
-                        <Text id="textMiyamaObjDesc3" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter" minHeight="30">Obj description goes here</Text>
+                        <Text id="textMiyamaObjDesc3" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter">Obj description goes here</Text>
                     </VerticalLayout>
                 </VerticalLayout>
 
-                <VerticalLayout id="vlShintoObjs" active="true" childForceExpandHeight="false">
-                    <Text color="#ffa500" fontSize="16" preferredHeight="40">Shinto</Text>
+                <VerticalLayout id="vlShintoObjs" active="true" padding="5 5 25 10" childForceExpandHeight="false" spacing="10">
+                    <Text color="#ffa500" fontSize="16">Shinto - 3VP</Text>
 
-                    <VerticalLayout active="true" childForceExpandHeight="false">
+                    <VerticalLayout id="vlShintoObj1" active="true" childForceExpandHeight="false">
                         <Text id="textShintoObjName1" color="rgba(1,1,1,1)" fontSize="16" preferredHeight="30">Obj name 1</Text>
-                        <Text id="textShintoObjDesc1" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter" minHeight="30">Obj description goes here</Text>
+                        <Text id="textShintoObjDesc1" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter">Obj description goes here</Text>
                     </VerticalLayout>
 
-                    <VerticalLayout active="false" childForceExpandHeight="false">
+                    <VerticalLayout id="vlShintoObj2" active="true" childForceExpandHeight="false">
                         <Text id="textShintoObjName2" color="rgba(1,1,1,1)" fontSize="16" preferredHeight="30">Obj name 2</Text>
-                        <Text id="textShintoObjDesc2" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter" minHeight="30">Obj description goes here</Text>
+                        <Text id="textShintoObjDesc2" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter">Obj description goes here</Text>
                     </VerticalLayout>
 
-                    <VerticalLayout active="false" childForceExpandHeight="false">
-                        <Text id="textShintoObjName3" color="rgba(1,1,1,1)" fontSize="16" preferredHeight="30">Obj name 3</Text>
-                        <Text id="textShintoObjDesc3" color="rgba(1,1,1,1)" fontSize="12" alignment="UpperCenter" minHeight="30">Obj description goes here</Text>
-                    </VerticalLayout>
                 </VerticalLayout>
             </VerticalLayout>
         </Panel>
