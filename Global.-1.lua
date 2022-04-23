@@ -401,27 +401,15 @@ function DoNextPhase()
         -- Show preparation actions
         Wait.time(
             function()
-                broadcastToAll("Reveal new event, gain mana from it, and apply its effect!", "Pink")
+                broadcastToAll("Draw action card until each player has 3 cards!", "Pink")
             end,
             2
         )
         Wait.time(
             function()
-                broadcastToAll("Reveal new objective in Miyama and Shinto!", "Pink")
-            end,
-            3.5
-        )
-        Wait.time(
-            function()
-                broadcastToAll("Draw action card until each player has 3 cards!", "Pink")
-            end,
-            5
-        )
-        Wait.time(
-            function()
                 broadcastToAll("Players may activate Prep skill in turn order", "Pink")
             end,
-            6.5
+            4
         )
     else
         broadcastToAll(PHASES[currentPhaseIndex].name .. " Phase", "Pink")
@@ -433,7 +421,7 @@ function DoNextPhase()
         elseif PHASES[currentPhaseIndex].name == "Action" then
             Wait.time(
                 function()
-                    broadcastToAll("Pick and set 2 attack cards!", "Pink")
+                    broadcastToAll("Pick 2 attack/skill cards!", "Pink")
                 end, 1)
             Wait.time(
                 function()
