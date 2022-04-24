@@ -1,3 +1,4 @@
+---@diagnostic disable: lowercase-global
 --[[ The onLoad event is called after the game save finishes loading. --]]
 function onLoad()
     Pool = {
@@ -11,8 +12,8 @@ BASE_GAME_MASTERS_GUID = "575684"
 ALL_MASTERS_GUID = "2cd95b"
 BASE_GAME_SERVANTS_GUID = "d8f1d7"
 ALL_SERVANTS_GUID = "b214c1"
-deckEventGUID = "99c433"
-deckObjectiveGUID = "71cee8"
+deckEventGUID = "23cc85"
+deckObjectiveGUID = "4d5578"
 zoneEventGUID = "eec076"
 zoneObjectiveGUID = "8d95fb"
 zoneBurnedEventGUID = "964b4d"
@@ -26,11 +27,11 @@ containerServantsGUID = BASE_GAME_SERVANTS_GUID
 zoneVPGUIDs = {"444e23", "f7d8c9", "342d38", "d95d7e", "cc7aa2", "95ef52", "c4aed1", "0fb17d", "696526", "e7b731", "c6a17d", "96399a", "d1781f", "102d0a", "52c935", "182fbb", "7a6864", "ea1e39", "417109", "727353", "ddce8c", "2c3b04", "649235", "b08a0a", "c0a1bd", "a856d7", "f1cb25", "adae75", "a6f32a", "7c80f1", "54ccfb", "b1f99b", "3f758b", "344387", "3b1b46", "c580b3", "d8c7a9", "e76013", "452e88"}
 
 PHASES = {
-    {name = "Preparation", color = "#FFFFFF"},
-    {name = "Outpost", color = "#F6E7D8"},
-    {name = "Action", color = "#F68989"},
-    {name = "Combat", color = "#C65D7B"},
-    {name = "End of Round", color = "#874356"}}
+    {name = "Preparation", color = "#F2F230"},
+    {name = "Outpost", color = "#C2F261"},
+    {name = "Action", color = "#91F291"},
+    {name = "Combat", color = "#61F2C2"},
+    {name = "End of Round", color = "#30F2F2"}}
 GAME_START = false
 ACTIVE_PLAYER_COLORS = {}
 
@@ -40,7 +41,11 @@ isEliminatingPlayer = false
 
 firstPlayerIndex = nil
 currentPlayerCount = 1
-currentEventGUID = nil
+currentEvent = nil
+currentObjectives = {
+	Miyama = {},
+	Shinto = {}
+}
 
 function ShuffleAllDecks()
     for i = 1, 3 do
@@ -70,14 +75,17 @@ function SetupGame()
     end
 
     ShuffleAllDecks()
+
     if containerServantsGUID ~= BASE_GAME_SERVANTS_GUID then
         SetupServantPoolFromAll()
         WaitFrames(500)
     end
+
     for i, color in ipairs(PLAYER_COLORS) do
         SetupMaster(color, i)
         SetupServant(color, i)
     end
+
 
     for i = 1, 2 do
         getObjectFromGUID(deckEventGUID).takeObject({position = getObjectFromGUID(zoneBurnedEventGUID).getPosition()})
@@ -88,6 +96,7 @@ function SetupGame()
     GAME_START = true
 
     DoNextPhase()
+
 
     return 1
 end
@@ -157,18 +166,18 @@ function SetupMaster(color, index)
     local zoneVP0 = getObjectFromGUID(zoneVPGUIDs[1])
     local zoneMaster = getObjectFromGUID(PLAYER_DATA[color].zoneMasterGUID)
     local zoneMasterCommandSeals = {}
-    for i, guid in ipairs(PLAYER_DATA[color].zoneMasterCommandSealGUIDs) do
+    for _, guid in ipairs(PLAYER_DATA[color].zoneMasterCommandSealGUIDs) do
         table.insert(zoneMasterCommandSeals, getObjectFromGUID(guid))
     end
     local zoneMasterSkills = {}
-    for i, guid in ipairs(PLAYER_DATA[color].zoneMasterSkillGUIDs) do
+    for _, guid in ipairs(PLAYER_DATA[color].zoneMasterSkillGUIDs) do
         table.insert(zoneMasterSkills, getObjectFromGUID(guid))
     end
 
     WaitObjectUntilReady(containerMaster)
 
     -- Standee
-    containerMaster.takeObject({position=zoneMaster.getPosition() + PLAYER_DATA[color].vectorStandee, rotation=PLAYER_DATA[color].rotation, smooth=false})
+    PLAYER_DATA[color].Standee = containerMaster.takeObject({position=zoneMaster.getPosition() + PLAYER_DATA[color].vectorStandee, rotation=PLAYER_DATA[color].rotation, smooth=false})
     -- VP Tracker
     PLAYER_DATA[color].VPTracker = containerMaster.takeObject({position=zoneVP0.getPosition() + Vector(0,index*1.5,0), rotation=PLAYER_DATA[color].rotation, smooth=false})
     -- Master Profile
@@ -254,6 +263,15 @@ function DoNextPhase()
             currentRound = currentRound + 1
         end
 
+		-- Returning all standees to their owners
+		for _, color in ipairs(ACTIVE_PLAYER_COLORS) do
+			if PLAYER_DATA[color].Standee ~= nil then
+				local playerData = PLAYER_DATA[color]
+				local zoneMaster = getObjectFromGUID(playerData.zoneMasterGUID)
+				playerData.Standee.setPosition(zoneMaster.getPosition() + playerData.vectorStandee)
+			end
+		end
+
         Wait.time(
             function()
                 broadcastToAll("Starting round "..currentRound.."!", "Pink")
@@ -280,6 +298,22 @@ function DoNextPhase()
 
         UpdateCurrentPlayerText()
 
+		-- Clear previous objectives
+		currentObjectives = {
+			Miyama = {},
+			Shinto = {}
+		}
+		local zoneDiscardedObjective = getObjectFromGUID(zoneDiscardedObjectiveGUID)
+		for _, zoneGUIDS in ipairs({zoneMiyamaActiveObjectiveGUIDs, zoneShintoActiveObjectiveGUIDs}) do
+			for _, zoneGUID in ipairs(zoneGUIDS) do
+				local zone = getObjectFromGUID(zoneGUID)
+				for _, object in ipairs(zone.getObjects()) do
+					object.setPosition(zoneDiscardedObjective.getPosition())
+					object.setRotation({0,180,0})
+				end
+			end
+		end
+
         -- Check deck event
         local zoneEvent = getObjectFromGUID(zoneEventGUID)
         local eventDeck = nil
@@ -297,46 +331,85 @@ function DoNextPhase()
                 end
             end
         end
-        --- Put event to current event
+
         if eventDeck then
             local zoneActiveEvent = getObjectFromGUID(zoneActiveEventGUID)
+			local activeEvent = GetObjectFromZone(zoneActiveEvent, {"Card"})
+
+			---- Remove previous active event
+			if activeEvent then
+				local zoneBurnedEvent = getObjectFromGUID(zoneBurnedEventGUID)
+				activeEvent.setPosition(zoneBurnedEvent.getPosition())
+				activeEvent.setRotation({0,180,180})
+			end
+
+        	---- Put event to current event
             if eventDeck.type == "Deck" then
-                currentEventGUID = eventDeck.takeObject({
+                currentEvent = eventDeck.takeObject({
                     position = zoneActiveEvent.getPosition(),
                     rotation = {0,180,0},
-                    isSmooth = false
-                }).guid
+                    smooth = false
+                })
             elseif eventDeck.type == "Card" then
                 eventDeck.setPosition(zoneActiveEvent.getPosition())
                 eventDeck.setRotation({0,180,0})
-                currentEventGUID = eventDeck.guid
+                currentEvent = eventDeck
             end
+
+			Wait.frames(function()
+				if currentEvent.getName() == "Turning Point" then
+					-- Add a face-up objective to Miyama and Shinto
+					AddNewObjective("Miyama", false)
+					AddNewObjective("Shinto", false)
+				elseif currentEvent.getName() == "Battle in Shinto" then
+					-- Add a face-up objective to Shinto
+					AddNewObjective("Shinto", false)
+				elseif currentEvent.getName() == "Killers in Miyama" then
+					-- Add a face-up objective to Miyama
+					AddNewObjective("Miyama", false)
+				elseif currentEvent.getName() == "The Night Fate Stood Still" then
+					-- Add a face-up objective to Miyama and Shinto
+					AddNewObjective("Miyama", false)
+					AddNewObjective("Shinto", false)
+				elseif currentEvent.getName() == "At the Gates of Hell" then
+					-- Add a face-up objective to Miyama
+					AddNewObjective("Miyama", false)
+				elseif currentEvent.getName() == "Heaven's Feel" then
+					-- Add 2 face-up objectives to Miyama
+					AddNewObjective("Miyama", false)
+					Wait.frames(function()
+						AddNewObjective("Miyama", false)
+					end, 120)
+				end
+			end, 120)
         end
+
+		Wait.frames(function()
+			-- Add face-up objective to Miyama
+			AddNewObjective("Miyama", false)
+			if currentEvent.getName() ~= "At the Gates of Hell" and
+				currentEvent.getName() ~= "Heaven's Feel" then
+				-- Add face-down objective to Shinto
+				AddNewObjective("Shinto", true)
+			end
+		end, 360)
+
+		Wait.frames(function()
+			UpdatePanelEventInfo()
+		end, 480)
 
         -- Show preparation actions
         Wait.time(
             function()
-                broadcastToAll("Reveal new event, gain mana from it, and apply its effect!", "Pink")
+                broadcastToAll("Draw action card until each player has 3 cards!", "Pink")
             end,
             2
         )
         Wait.time(
             function()
-                broadcastToAll("Reveal new objective in Miyama and Shinto!", "Pink")
-            end,
-            3.5
-        )
-        Wait.time(
-            function()
-                broadcastToAll("Draw action card until each player has 3 cards!", "Pink")
-            end,
-            5
-        )
-        Wait.time(
-            function()
                 broadcastToAll("Players may activate Prep skill in turn order", "Pink")
             end,
-            6.5
+            4
         )
     else
         broadcastToAll(PHASES[currentPhaseIndex].name .. " Phase", "Pink")
@@ -348,19 +421,35 @@ function DoNextPhase()
         elseif PHASES[currentPhaseIndex].name == "Action" then
             Wait.time(
                 function()
-                    broadcastToAll("Pick and set 2 attack cards!", "Pink")
+                    broadcastToAll("Pick 2 attack/skill cards!", "Pink")
                 end, 1)
             Wait.time(
                 function()
                     broadcastToAll("Resolve Action effect in turn order!", "Pink")
                 end, 3)
+			--- Reveal face-down Shinto objectives
+			for _, zoneGUID in ipairs(zoneShintoActiveObjectiveGUIDs) do
+				local zone = getObjectFromGUID(zoneGUID)
+				local objective = GetObjectFromZone(zone, {"Card"})
+				if objective then
+					objective.setRotation({0,180,0})
+					for i, shintoObjective in ipairs(currentObjectives["Shinto"]) do
+						if shintoObjective.name == objective.getName() then
+							currentObjectives["Shinto"][i].facedown = false
+							break
+						end
+					end
+				end
+			end
+			Wait.frames(function()
+				UpdatePanelEventInfo()
+			end, 120)
         elseif PHASES[currentPhaseIndex].name == "Combat" then
             Wait.time(
                 function()
                     broadcastToAll("Resolve Combat effect in turn order!", "Pink")
                 end, 1)
         elseif PHASES[currentPhaseIndex].name == "End of Round" then
-            local currentRound = currentRound
             Wait.time(
                 function()
                     broadcastToAll("Sum up each players VP point!", "Pink")
@@ -472,6 +561,64 @@ function GetAlivePlayersCount()
     return count
 end
 
+function AddNewObjective(location, facedown)
+	local zoneObjective = getObjectFromGUID(zoneObjectiveGUID)
+	local deckObjective = GetObjectFromZone(zoneObjective, {"Deck", "Card"})
+	if not deckObjective then
+		local zoneDiscardedObjective = getObjectFromGUID(zoneDiscardedObjectiveGUID)
+		local discardedObjective = GetObjectFromZone(zoneDiscardedObjective, {"Deck", "Card"})
+		if not discardedObjective then
+			return
+		end
+		deckObjective = discardedObjective
+		discardedObjective.setPosition(zoneObjective.getPosition())
+		discardedObjective.setRotation({0,180,180})
+		discardedObjective.shuffle()
+	end
+
+	local position = nil
+	local rotation = {0,180,0}
+	local zoneGUIDs = {}
+	if location == "Miyama" then
+		zoneGUIDs = zoneMiyamaActiveObjectiveGUIDs
+	elseif location == "Shinto" then
+		zoneGUIDs = zoneShintoActiveObjectiveGUIDs
+	end
+	for _, zoneGUID in ipairs(zoneGUIDs) do
+		local zone = getObjectFromGUID(zoneGUID)
+		if not GetObjectFromZone(zone, {"Card"}) then
+			position = zone.getPosition()
+			break;
+		end
+	end
+	if facedown then
+		rotation = {0,180,180}
+	end
+
+	if not position then
+		return
+	end
+
+	Wait.frames(function()
+		local objective = nil
+		if deckObjective.type == "Deck" then
+			objective = deckObjective.takeObject({
+				position = position,
+				rotation = rotation,
+				smooth = false
+			})
+		elseif deckObjective.type == "Card" then
+			objective = deckObjective
+			objective.setPosition(position)
+			objective.setRotation(rotation)
+		end
+
+		if objective then
+			table.insert(currentObjectives[location], {name = objective.getName(), facedown = facedown})
+		end
+	end, 60)
+end
+
 -- UI FUNCTIONS
 function HideSetupGame()
     if UI.getAttribute("panelSetupGameContent", "active") == "true" then
@@ -508,14 +655,6 @@ function UpdateCurrentPlayerText()
     for _, color in ipairs(PLAYER_COLORS) do
         UI.setAttribute("textCurrentPlayer"..color, "color", ACTIVE_PLAYER_COLORS[currentPlayerIndex])
         UI.setValue("textCurrentPlayer"..color, ACTIVE_PLAYER_COLORS[currentPlayerIndex])
-
-        -- if ACTIVE_PLAYER_COLORS[currentPlayerIndex] ~= color then
-        --     UI.setAttribute("buttonEndTurn"..color, "colors", "Grey|Grey|Grey|Grey")
-        --     UI.setAttribute("buttonEndTurn"..color, "interactable", "false")
-        -- else
-        --     UI.setAttribute("buttonEndTurn"..color, "colors", "White|White|White|White")
-        --     UI.setAttribute("buttonEndTurn"..color, "interactable", "true")
-        -- end
     end
 end
 
@@ -525,6 +664,53 @@ function UpdatePhasePanel(phase)
         UI.setAttribute("textCurrentPhase"..color, "color", phase.color)
         UI.setAttribute("panelPhase"..color, "active", "true")
     end
+end
+
+function UpdatePanelEventInfo()
+	local eventName = currentEvent.getName()
+	if eventName then
+		UI.setValue("textEventName", "Event - "..eventName)
+		UI.setValue("textEventDesc", EVENTS[eventName].description)
+		UI.setAttribute("panelEventInfo", "active", "true")
+	else
+		UI.setAttribute("panelEventInfo", "active", "false")
+	end
+	if currentObjectives["Miyama"] and #currentObjectives["Miyama"] > 0 then
+		for i = 1, 3, 1 do
+			if i <= #currentObjectives["Miyama"] then
+				local objectiveName = currentObjectives["Miyama"][i].name
+				UI.setValue("textMiyamaObjName"..i, objectiveName.." - "..OBJECTIVES[objectiveName].vp.."VP")
+				UI.setValue("textMiyamaObjDesc"..i, OBJECTIVES[objectiveName].description)
+				UI.setAttribute("vlMiyamaObj"..i, "active", "true")
+			else
+				UI.setAttribute("vlMiyamaObj"..i, "active", "false")
+			end
+		end
+		UI.setAttribute("vlMiyamaObjs", "active", "true")
+	else
+		UI.setAttribute("vlMiyamaObjs", "active", "false")
+	end
+	if currentObjectives["Shinto"] and #currentObjectives["Shinto"] > 0 then
+		for i = 1, 3, 1 do
+			if i <= #currentObjectives["Shinto"] then
+				local isFacedown = currentObjectives["Shinto"][i].facedown
+				if isFacedown then
+					UI.setValue("textShintoObjName"..i, "??? - ?VP")
+					UI.setValue("textShintoObjDesc"..i, "Objective hasn't revealed.")
+				else
+					local objectiveName = currentObjectives["Shinto"][i].name
+					UI.setValue("textShintoObjName"..i, objectiveName.." - "..OBJECTIVES[objectiveName].vp.."VP")
+					UI.setValue("textShintoObjDesc"..i, OBJECTIVES[objectiveName].description)
+				end
+				UI.setAttribute("vlShintoObj"..i, "active", "true")
+			else
+				UI.setAttribute("vlShintoObj"..i, "active", "false")
+			end
+		end
+		UI.setAttribute("vlShintoObjs", "active", "true")
+	else
+		UI.setAttribute("vlShintoObjs", "active", "false")
+	end
 end
 
 -- STATIC VARIABLES
@@ -628,6 +814,131 @@ PLAYER_DATA = {
     }
 }
 
+EVENTS = {
+	-- Normal Events
+	["Turning Point"] = {
+		mana = 2,
+		description = "Add a face-up objective to [Miyama] and [Shinto]."
+	},
+	["Battle in Shinto"] = {
+		mana = 2,
+		description = "Add a face-up objective to [Shinto]."
+	},
+	["Killers in Miyama"] = {
+		mana = 2,
+		description = "Add a face-up objective to [Miyama]."
+	},
+	["Visions of a Distant Life"] = {
+		mana = 0,
+		description = "Players in [Miyama] and [Shinto] gain +3 total power, if all their attacks have at least 1 matching type."
+	},
+	["Angra Mainyu's Essence"] = {
+		mana = 0,
+		description = "Magic type attacks gain +1 power in [Miyama] and [Shinto].\nNoble Phantasms cannot be used."
+	},
+	["Angra Mainyu's Shade"] = {
+		mana = 0,
+		description = "Agility type attacks gain +1 power in [Miyama] and [Shinto].\nNoble Phantasms cannot be used."
+	},
+	["Angra Mainyu's Curse"] = {
+		mana = 0,
+		description = "Strength type attacks gain +1 power in [Miyama] and [Shinto].\nNoble Phantasms cannot be used."
+	},
+	["Overwhelming Rage"] = {
+		mana = 2,
+		description = "Strength type attacks gain +2 power in [Miyama] and [Shinto]."
+	},
+	["Calm before the Storm"] = {
+		mana = 2,
+		description = "Agility type attacks gain +2 power in [Miyama] and [Shinto]."
+	},
+	["Perfect Flow"] = {
+		mana = 2,
+		description = "Magic type attacks gain +2 power in [Miyama] and [Shinto]."
+	},
+
+	-- Climax Events
+	["The Night Fate Stood Still"] = {
+		mana = 4,
+		description = "Climax: 4+ Players left.\nAdd a face-up objectives to [Miyama] and [Shinto]."
+	},
+	["At the Gates of Hell"] = {
+		mana = 4,
+		description = "Climax: 3+ Players left.\nBan acces to [Shinto], Recon and all but one space in the [Workshop].\nAdd 1 face-up objectives to [Miyama]."
+	},
+	["Heaven's Feel"] = {
+		mana = 6,
+		description = "Climax: 2+ Players left.\nBan acces to [Shinto], Recon and all but one space in the [Workshop].\nAdd 2 face-up objectives to [Miyama]."
+	}
+}
+
+OBJECTIVES = {
+	["Honorable Duel"] = {
+		vp = 2,
+		description = "Strength type attacks gain +2 power on this battlefield."
+	},
+	["Sacrificial Grounds"] = {
+		vp = 2,
+		description = "Magic type attacks gain +2 power on this battlefield."
+	},
+	["Suppressive Fire"] = {
+		vp = 2,
+		description = "Agility type attacks gain +3 power on this battlefield."
+	},
+	["Synergize"] = {
+		vp = 2,
+		description = "Players on this battlefield gain +4 total power, if all their attacks have at least 1 matching type."
+	},
+	["Ambush"] = {
+		vp = 2,
+		description = "Players gain +5 total power on this battlefield, if their Servant's name is hidden."
+	},
+	["Test of Strength"] = {
+		vp = 3,
+		description = "Strength type attacks gain +3 power on this battlefield."
+	},
+	["Sacred Grounds"] = {
+		vp = 2,
+		description = "Magic type attacks gain +3 power on this battlefield."
+	},
+	["Desperation Move"] = {
+		vp = 4,
+		description = "Last place in VP gains +12 Power here, 2nd to last place gains +8 Power and 3rd to last place gains +4 Power."
+	},
+	["Bring Illya Back"] = {
+		vp = 5,
+		description = ""
+	},
+	["Break Bounded Field"] = {
+		vp = 2,
+		description = "Special type attacks cannot be played on this battlefield.\nPlayers cannot move to or from this location."
+	},
+	["Scavenge Ground Zero"] = {
+		vp = 3,
+		description = "This battlefield does not provide any terrain advantage."
+	},
+	["Open Ley Line"] = {
+		vp = 2,
+		description = "At the end of combat players on this battlefield gain 2 Mana."
+	},
+	["Take High Ground"] = {
+		vp = 3,
+		description = "Players on this battlefield double thier terrain advantage."
+	},
+	["Contain Neutral Threat"] = {
+		vp = 2,
+		description = "Attacks with base power 4 or higher gain +1 power.\nThe winner of this fight may restore 1 Comamnd Seal."
+	},
+	["Fated Confrontation"] = {
+		vp = 3,
+		description = "Attacks on this battlefield with a base power of 1 and 2 have their base power increased to 5."
+	},
+	["Difficult Terrain"] = {
+		vp = 2,
+		description = "Agility type attacks gain +2 power on this battlefield."
+	}
+}
+
 -- BASIC FUNCTIONS
 function WaitFrames(frames)
     while frames > 0 do
@@ -664,8 +975,8 @@ end
 ---@param zone any
 ---@param types table
 function GetObjectFromZone(zone, types)
-    for i, object in ipairs(zone.getObjects()) do
-        if hasValue(types, object.type) then
+    for _, object in ipairs(zone.getObjects()) do
+        if HasValue(types, object.type) then
             return object
         end
     end
